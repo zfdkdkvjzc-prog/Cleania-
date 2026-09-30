@@ -1,34 +1,23 @@
 <?php
-header('Content-Type: application/json');
 require 'db.php';
+exigir_post();
+$aliada = aliada_actual($conexion);
 
 $id = intval($_POST['id'] ?? 0);
-$numeroAliada = trim($_POST['numero_aliada'] ?? '');
-
-if ($id === 0 || $numeroAliada === '') {
-    echo json_encode(["success" => false, "message" => "Faltan datos."]);
-    exit;
+if ($id <= 0) {
+    fail("Faltan datos.");
 }
 
-// Verifica que la aliada exista y esté activa
-$stmt = $conexion->prepare("SELECT id FROM aliadas WHERE numero_aliada = ? AND activa = 1");
-$stmt->bind_param("s", $numeroAliada);
-$stmt->execute();
-if ($stmt->get_result()->num_rows === 0) {
-    echo json_encode(["success" => false, "message" => "Aliada no válida."]);
-    exit;
-}
-
-// Solo toma el trabajo si SIGUE pendiente (evita que dos aliadas tomen el mismo)
-$upd = $conexion->prepare("UPDATE reservas SET estado = 'asignada', asignada_a = ? WHERE id = ? AND estado = 'pendiente'");
-$upd->bind_param("si", $numeroAliada, $id);
+// Solo toma el trabajo si SIGUE pendiente (evita que dos aliadas tomen el mismo).
+// El número de aliada sale de la sesión, nunca del navegador.
+$upd = $conexion->prepare(
+    "UPDATE reservas SET estado = 'asignada', asignada_a = ?
+     WHERE id = ? AND estado = 'pendiente' AND fecha >= CURDATE()"
+);
+$upd->bind_param("si", $aliada['numero_aliada'], $id);
 $upd->execute();
 
 if ($upd->affected_rows > 0) {
-    echo json_encode(["success" => true]);
-} else {
-    echo json_encode(["success" => false, "message" => "Este trabajo ya fue tomado por otra aliada."]);
+    responder(["success" => true]);
 }
-
-$upd->close();
-$conexion->close();
+fail("Este trabajo ya fue tomado por otra aliada.", 409);

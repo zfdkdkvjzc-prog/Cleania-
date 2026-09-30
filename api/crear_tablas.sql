@@ -1,11 +1,11 @@
 -- ==========================================
--- Ejecuta esto UNA SOLA VEZ en phpMyAdmin (dentro de tu cPanel de GoDaddy)
--- Selecciona tu base de datos, entra a la pestaña "SQL" y pega este código.
+-- Ejecuta esto en phpMyAdmin (dentro de tu cPanel de GoDaddy):
+-- selecciona tu base de datos, entra a la pestaña "SQL" y pega este código.
+-- Es seguro ejecutarlo aunque ya tengas tablas creadas: solo crea las que faltan.
 -- ==========================================
 
--- 👇 Si ya habías ejecutado este archivo antes (tabla "reservas" ya existe),
--- ejecuta SOLO esta línea para agregar la columna nueva. Si es la primera vez,
--- ignórala, el CREATE TABLE de abajo ya la incluye.
+-- 👇 SOLO si ya tenías la tabla "reservas" de una versión MUY antigua (sin la columna asignada_a),
+-- quita los dos guiones del inicio de esta línea y ejecútala:
 -- ALTER TABLE reservas ADD COLUMN asignada_a VARCHAR(10) DEFAULT NULL;
 
 
@@ -21,17 +21,19 @@ CREATE TABLE IF NOT EXISTS reservas (
     total VARCHAR(20) NOT NULL,
     estado VARCHAR(20) DEFAULT 'pendiente',
     asignada_a VARCHAR(10) DEFAULT NULL,
-    creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+    creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_estado_fecha (estado, fecha),
+    INDEX idx_asignada (asignada_a)
+) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS aliadas_pendientes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
-    documentos TEXT NOT NULL COMMENT 'Rutas de los archivos, separadas por coma',
-    estado VARCHAR(20) DEFAULT 'en_revision',
+    documentos TEXT NOT NULL COMMENT 'Nombres de archivo en uploads_aliadas, separados por coma',
+    estado VARCHAR(20) DEFAULT 'en_revision' COMMENT 'en_revision, aprobada o rechazada',
     creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS aliadas (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -41,4 +43,21 @@ CREATE TABLE IF NOT EXISTS aliadas (
     telefono VARCHAR(20) NOT NULL,
     activa TINYINT(1) DEFAULT 1,
     creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+) DEFAULT CHARSET=utf8mb4;
+
+-- Administradores del panel. Se llena solo la primera vez que entras con el usuario de config.php.
+CREATE TABLE IF NOT EXISTS administradores (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
+) DEFAULT CHARSET=utf8mb4;
+
+-- Registro de intentos para frenar ataques de fuerza bruta y spam de formularios.
+CREATE TABLE IF NOT EXISTS intentos_login (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip VARCHAR(45) NOT NULL,
+    tipo VARCHAR(20) NOT NULL,
+    creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ip_tipo (ip, tipo, creado_en)
+) DEFAULT CHARSET=utf8mb4;

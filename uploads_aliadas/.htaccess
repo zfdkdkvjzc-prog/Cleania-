@@ -1,1 +1,10 @@
+# Los documentos de las aliadas (INE, comprobantes) NUNCA se sirven directamente.
+# Solo el administrador los ve, a través de api/documento.php.
 Options -Indexes
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

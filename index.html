@@ -256,11 +256,11 @@
                     <div class="mt-4 flex text-sm text-slate-600 justify-center">
                         <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-sky-600 focus-within:outline-none">
                             <span>Sube tus documentos</span>
-                            <input id="file-upload" name="file-upload" type="file" multiple class="sr-only">
+                            <input id="file-upload" name="file-upload" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" class="sr-only">
                         </label>
                         <p class="pl-1">o arrástralos aquí</p>
                     </div>
-                    <p class="text-xs text-slate-500 mt-2">INE, Comprobante de Domicilio y Referencias (Formatos: PNG, JPG, PDF)</p>
+                    <p class="text-xs text-slate-500 mt-2">INE, Comprobante de Domicilio y Referencias (Formatos: PNG, JPG, PDF · máx. 5 archivos de 5 MB)</p>
                 </div>
 
                 <div class="flex items-start bg-slate-50 p-4 rounded-lg border border-slate-200">
@@ -297,6 +297,13 @@
             </div>
         </div>
 
+        <!-- Trabajos que ya tomó esta aliada (con teléfono del cliente) -->
+        <div id="mis-trabajos-section" class="hidden-view mb-10">
+            <h3 class="text-xl font-bold text-secondary mb-4">Mis trabajos</h3>
+            <div id="mis-trabajos-container" class="space-y-4"></div>
+        </div>
+
+        <h3 class="text-xl font-bold text-secondary mb-4">Disponibles para tomar</h3>
         <!-- Contenedor dinámico: aquí se cargan las reservas pendientes reales -->
         <div id="jobs-container" class="space-y-4">
             <div class="bg-slate-100 border border-slate-200 rounded-xl p-10 text-center text-slate-500">
@@ -314,6 +321,7 @@
                 <!-- Enlaces correctos apuntando a los archivos locales -->
                 <a href="Terminos_y_Condiciones_Cliente_Cleania.pdf" target="_blank" class="hover:text-primary">Términos y Condiciones</a>
                 <a href="Aviso_de_Privacidad_Cleania.pdf" target="_blank" class="hover:text-primary">Aviso de Privacidad</a>
+                <a href="api/admin.php" class="hover:text-primary">Administración</a>
             </div>
             <p class="text-slate-400 text-sm">&copy; 2026 Cleania (Representante: Wendy Valery Rosalia Flores Ordaz). Todos los derechos reservados. Estado de México.</p>
         </div>
@@ -327,24 +335,44 @@
          LÓGICA DEL SISTEMA (JAVASCRIPT)
          ========================================== -->
     <script>
-        // NAVEGACIÓN Y SESIONES
-        function switchView(viewId) {
-            if (viewId === 'pro-view') {
-                const isLogged = localStorage.getItem('cleania_pro_logged');
-                if (!isLogged) {
-                    showAlert("Acceso denegado. Debes iniciar sesión con tu número de aliada.", "error");
-                    viewId = 'pro-login-view'; 
-                } else {
-                    document.getElementById('display-aliada-id').innerText = localStorage.getItem('cleania_aliada_id');
-                    cargarTrabajos();
-                }
-            }
+        // Escapa texto antes de insertarlo como HTML (evita que datos de la base ejecuten código)
+        function esc(valor) {
+            return String(valor ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
 
+        // NAVEGACIÓN Y SESIONES (la sesión vive en el servidor; el navegador solo la consulta)
+        function mostrarVista(viewId) {
             const views = ['home-view', 'booking-view', 'pro-login-view', 'pro-register-view', 'pro-view'];
             views.forEach(v => document.getElementById(v).classList.add('hidden-view'));
-            
             document.getElementById(viewId).classList.remove('hidden-view');
             window.scrollTo(0, 0);
+        }
+
+        async function switchView(viewId) {
+            if (viewId === 'pro-view' || viewId === 'pro-login-view') {
+                const sesion = await consultarSesion();
+                if (sesion && sesion.logged) {
+                    document.getElementById('display-aliada-id').innerText = sesion.numero;
+                    mostrarVista('pro-view');
+                    cargarTrabajos();
+                    return;
+                }
+                if (viewId === 'pro-view') {
+                    showAlert("Acceso denegado. Debes iniciar sesión con tu número de aliada.", "error");
+                }
+                viewId = 'pro-login-view';
+            }
+            mostrarVista(viewId);
+        }
+
+        async function consultarSesion() {
+            try {
+                const res = await fetch('api/sesion.php', { credentials: 'same-origin' });
+                return await res.json();
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
         }
 
         async function loginPro(event) {
@@ -357,14 +385,11 @@
                 formData.append('numero', idInput);
                 formData.append('password', passInput);
 
-                const res = await fetch('api/login.php', { method: 'POST', body: formData });
+                const res = await fetch('api/login.php', { method: 'POST', body: formData, credentials: 'same-origin' });
                 const data = await res.json();
 
                 if (data.success) {
-                    localStorage.setItem('cleania_pro_logged', 'true');
-                    localStorage.setItem('cleania_aliada_id', data.numero);
-
-                    showAlert("¡Bienvenida Aliada " + data.numero + "!", "success");
+                    showAlert("¡Bienvenida " + (data.nombre || "Aliada " + data.numero) + "!", "success");
 
                     document.getElementById('login-id').value = '';
                     document.getElementById('login-pass').value = '';
@@ -378,22 +403,59 @@
             }
         }
 
-        function logoutPro() {
-            localStorage.removeItem('cleania_pro_logged');
-            localStorage.removeItem('cleania_aliada_id');
+        async function logoutPro() {
+            try {
+                await fetch('api/logout.php', { method: 'POST', credentials: 'same-origin' });
+            } catch (err) {
+                console.error(err);
+            }
             showAlert("Sesión cerrada correctamente.", "success");
-            switchView('home-view');
+            mostrarVista('home-view');
+        }
+
+        // Si la sesión expiró mientras la aliada usaba el panel, la regresa al login
+        function sesionExpirada(res, data) {
+            if (res.status === 401) {
+                showAlert(data.message || "Tu sesión expiró. Inicia sesión de nuevo.", "error");
+                mostrarVista('pro-login-view');
+                return true;
+            }
+            return false;
         }
 
         // PANEL DE TRABAJOS DISPONIBLES
         const nombresTipo = { basica: 'Limpieza Estándar', profunda: 'Limpieza Profunda' };
         const nombresRango = { manana: 'Mañana (08:00 AM - 12:00 PM)', tarde: 'Tarde (12:00 PM - 04:00 PM)', noche: 'Fin de Tarde (04:00 PM - 07:00 PM)' };
 
+        function detalleTrabajo(t) {
+            return `
+                <p class="font-bold text-secondary">${esc(nombresTipo[t.tipo_limpieza] || t.tipo_limpieza)} — ${esc(t.recamaras)} Recámara(s), ${esc(t.banos)} Baño(s)</p>
+                <p class="text-sm text-slate-500">${esc(t.direccion)}</p>
+                <p class="text-sm text-slate-500">${esc(t.fecha)} · ${esc(nombresRango[t.rango_horario] || t.rango_horario)}</p>`;
+        }
+
         async function cargarTrabajos() {
             const container = document.getElementById('jobs-container');
             try {
-                const res = await fetch('api/listar_reservas.php');
+                const res = await fetch('api/listar_reservas.php', { credentials: 'same-origin' });
                 const data = await res.json();
+                if (sesionExpirada(res, data)) return;
+
+                const misTrabajos = data.mis_trabajos || [];
+                document.getElementById('mis-trabajos-section').classList.toggle('hidden-view', misTrabajos.length === 0);
+                document.getElementById('mis-trabajos-container').innerHTML = misTrabajos.map(t => `
+                    <div class="bg-sky-50 border border-primary rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <div>
+                            ${detalleTrabajo(t)}
+                            <p class="text-sm font-bold text-secondary mt-1">Cliente: ${esc(t.telefono)}
+                                · <a href="https://wa.me/52${esc(t.telefono)}" target="_blank" rel="noopener" class="text-green-700 hover:underline">WhatsApp</a></p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="font-bold text-primary text-lg">${esc(t.total)}</span>
+                            <span class="text-xs font-bold uppercase px-3 py-1 rounded-full ${t.estado === 'completada' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">${esc(t.estado)}</span>
+                        </div>
+                    </div>
+                `).join('');
 
                 if (!data.success || data.trabajos.length === 0) {
                     container.innerHTML = `
@@ -406,14 +468,10 @@
 
                 container.innerHTML = data.trabajos.map(t => `
                     <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
-                        <div>
-                            <p class="font-bold text-secondary">${nombresTipo[t.tipo_limpieza] || t.tipo_limpieza} — ${t.recamaras} Recámara(s), ${t.banos} Baño(s)</p>
-                            <p class="text-sm text-slate-500">${t.direccion}</p>
-                            <p class="text-sm text-slate-500">${t.fecha} · ${nombresRango[t.rango_horario] || t.rango_horario}</p>
-                        </div>
+                        <div>${detalleTrabajo(t)}</div>
                         <div class="flex items-center gap-4">
-                            <span class="font-bold text-primary text-lg">${t.total}</span>
-                            <button onclick="tomarTrabajo(${t.id})" class="bg-primary hover:bg-sky-400 text-white font-bold py-2 px-5 rounded-xl">Tomar trabajo</button>
+                            <span class="font-bold text-primary text-lg">${esc(t.total)}</span>
+                            <button onclick="tomarTrabajo(${Number(t.id)})" class="bg-primary hover:bg-sky-400 text-white font-bold py-2 px-5 rounded-xl">Tomar trabajo</button>
                         </div>
                     </div>
                 `).join('');
@@ -424,14 +482,13 @@
         }
 
         async function tomarTrabajo(id) {
-            const numeroAliada = localStorage.getItem('cleania_aliada_id');
             try {
                 const formData = new FormData();
                 formData.append('id', id);
-                formData.append('numero_aliada', numeroAliada);
 
-                const res = await fetch('api/tomar_reserva.php', { method: 'POST', body: formData });
+                const res = await fetch('api/tomar_reserva.php', { method: 'POST', body: formData, credentials: 'same-origin' });
                 const data = await res.json();
+                if (sesionExpirada(res, data)) return;
 
                 if (data.success) {
                     showAlert("¡Trabajo asignado! Contacta al cliente para confirmar.", "success");
@@ -497,10 +554,10 @@
             const rooms = document.getElementById('rooms').value;
             const baths = document.getElementById('baths').value;
             const type = document.querySelector('input[name="service_type"]:checked').value;
-            const total = document.getElementById('price-total').innerText;
 
             if (!date || timeRange === "") { showAlert("Por favor selecciona la fecha y el rango de horario para el servicio.", "error"); return; }
             if(address.trim() === "" || phone.trim() === "") { showAlert("Llena tu dirección y celular.", "error"); return; }
+            if (phone.replace(/\D/g, '').length < 10) { showAlert("El celular debe tener 10 dígitos.", "error"); return; }
             if (!legalChecked) { showAlert("Debes aceptar los Términos y Privacidad.", "error"); return; }
 
             try {
@@ -512,14 +569,16 @@
                 formData.append('rooms', rooms);
                 formData.append('baths', baths);
                 formData.append('type', type);
-                formData.append('total', total);
 
                 const res = await fetch('api/guardar_reserva.php', { method: 'POST', body: formData });
                 const data = await res.json();
 
-                if (!data.success) throw new Error(data.message || 'Error desconocido');
+                if (!data.success) {
+                    showAlert(data.message || "Hubo un error al guardar tu solicitud. Intenta de nuevo.", "error");
+                    return;
+                }
 
-                showAlert("¡Solicitud Registrada! Te notificaremos al " + phone, "success");
+                showAlert("¡Solicitud Registrada por " + data.total + "! Te notificaremos al " + phone, "success");
             } catch (err) {
                 console.error(err);
                 showAlert("Hubo un error al guardar tu solicitud. Intenta de nuevo.", "error");
@@ -542,6 +601,11 @@
             const files = fileInput.files;
 
             if(name.trim() === "") { showAlert("Por favor, ingresa tu nombre completo.", "error"); return; }
+            if (phone.replace(/\D/g, '').length < 10) { showAlert("Ingresa tu teléfono de WhatsApp a 10 dígitos.", "error"); return; }
+            if (files.length > 5) { showAlert("Puedes subir máximo 5 documentos.", "error"); return; }
+            for (const file of files) {
+                if (file.size > 5 * 1024 * 1024) { showAlert("El archivo \"" + file.name + "\" pesa más de 5 MB.", "error"); return; }
+            }
             if (files.length === 0) { showAlert("Debes subir al menos un documento (INE, etc).", "error"); return; }
             if (!legalChecked) { showAlert("Es obligatorio aceptar el Aviso de Privacidad.", "error"); return; }
 
@@ -558,7 +622,10 @@
                 const res = await fetch('api/guardar_aliada.php', { method: 'POST', body: formData });
                 const data = await res.json();
 
-                if (!data.success) throw new Error(data.message || 'Error desconocido');
+                if (!data.success) {
+                    showAlert(data.message || "Hubo un error al subir tus documentos. Intenta de nuevo.", "error");
+                    return;
+                }
 
                 showAlert("¡Documentos enviados! Los revisaremos y te contactaremos por WhatsApp para darte tu número de aliada y contraseña.", "success");
             } catch (err) {
@@ -575,6 +642,10 @@
 
         window.onload = () => {
             calculatePrice();
+            // No permite elegir fechas pasadas en el calendario
+            const hoy = new Date();
+            hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
+            document.getElementById('client-date').min = hoy.toISOString().slice(0, 10);
         };
     </script>
 </body>
