@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleania | Tu Hogar Impecable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root {
+            --color-primary: #00b4d8; 
+            --color-secondary: #0f172a; 
+        }
+        .text-primary { color: var(--color-primary); }
+        .bg-primary { background-color: var(--color-primary); }
+        .bg-primary-hover:hover { background-color: #0096c7; }
+        .text-secondary { color: var(--color-secondary); }
+        .bg-secondary { background-color: var(--color-secondary); }
+        
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hidden-view { display: none !important; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased">
+
+    <!-- ==========================================
+         CAPA 0: NAVEGACIÓN GLOBAL (HEADER)
+         ========================================== -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- LOGO -->
+                <div class="flex-shrink-0 flex items-center cursor-pointer" onclick="switchView('home-view')">
+                    <span class="text-3xl font-black text-secondary">C<span class="text-primary">✨</span></span>
+                    <span class="ml-2 text-2xl font-bold text-primary tracking-tight">cleania</span>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <button onclick="switchView('home-view')" class="text-slate-600 hover:text-primary font-medium">Inicio</button>
+                    <button onclick="switchView('booking-view')" class="text-slate-600 hover:text-primary font-medium">Agendar Limpieza</button>
+                    <button onclick="switchView('pro-login-view')" class="text-slate-600 hover:text-primary font-medium">Área Profesional</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================
+         CAPA 1: INICIO (LANDING PAGE)
+         ========================================== -->
+    <main id="home-view" class="fade-in block">
+        <div class="relative bg-secondary overflow-hidden">
+            <div class="max-w-7xl mx-auto">
+                <div class="relative z-10 pb-8 bg-secondary sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32 px-4 sm:px-6 lg:px-8 pt-20">
+                    <div class="sm:text-center lg:text-left">
+                        <h1 class="text-4xl tracking-tight font-extrabold text-white sm:text-5xl md:text-6xl">
+                            <span class="block xl:inline">Hogar limpio,</span>
+                            <span class="block text-primary">mente tranquila.</span>
+                        </h1>
+                        <p class="mt-3 text-base text-slate-300 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                            Conectamos tu hogar con profesionales de limpieza independientes, rigurosamente verificadas y de absoluta confianza en el Estado de México.
+                        </p>
+                        <div class="mt-8 sm:flex sm:justify-center lg:justify-start gap-4">
+                            <button onclick="switchView('booking-view')" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-bold rounded-full text-white bg-primary bg-primary-hover md:py-4 md:text-lg">
+                                Cotizar y Agendar
+                            </button>
+                            <button onclick="switchView('pro-register-view')" class="mt-3 w-full flex items-center justify-center px-8 py-3 border-2 border-primary text-base font-bold rounded-full text-primary hover:bg-slate-800 md:py-4 md:text-lg md:mt-0">
+                                Aplica para ser Aliada
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2 bg-slate-800 flex items-center justify-center">
+                <div class="p-10 text-slate-500 text-center border-2 border-dashed border-slate-600 m-10 rounded-lg w-full h-64 lg:h-5/6 flex items-center justify-center">
+                    [ Imagen de Cliente o Profesional ]
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==========================================
+         CAPA 2: CLIENTES - COTIZADOR Y RESERVA
+         ========================================== -->
+    <main id="booking-view" class="fade-in hidden-view py-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-extrabold text-secondary">Configura tu limpieza</h2>
+            <p class="mt-2 text-slate-500">Obtén un precio transparente al instante y agenda a tu profesional.</p>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="flex-1 bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-slate-100">
+                <form id="booking-form" class="space-y-6">
+                    <!-- Habitaciones -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Recámaras</label>
+                            <select id="rooms" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary" onchange="calculatePrice()">
+                                <option value="1">1 Recámara</option>
+                                <option value="2">2 Recámaras</option>
+                                <option value="3">3 Recámaras</option>
+                                <option value="4">4+ Recámaras</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Baños</label>
+                            <select id="baths" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary" onchange="calculatePrice()">
+                                <option value="1">1 Baño</option>
+                                <option value="2">2 Baños</option>
+                                <option value="3">3 Baños</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Limpieza -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Tipo de Limpieza</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label class="border p-4 rounded-lg cursor-pointer hover:border-primary flex items-start gap-3 border-primary bg-sky-50" id="label-basica" onclick="selectServiceType('basica')">
+                                <input type="radio" name="service_type" value="basica" class="mt-1" checked onchange="calculatePrice()">
+                                <div>
+                                    <p class="font-bold text-secondary">Estándar</p>
+                                    <p class="text-xs text-slate-500">Limpieza superficial, polvo y pisos.</p>
+                                </div>
+                            </label>
+                            <label class="border p-4 rounded-lg cursor-pointer hover:border-primary flex items-start gap-3" id="label-profunda" onclick="selectServiceType('profunda')">
+                                <input type="radio" name="service_type" value="profunda" class="mt-1" onchange="calculatePrice()">
+                                <div>
+                                    <p class="font-bold text-secondary">Profunda</p>
+                                    <p class="text-xs text-slate-500">Detalle a fondo, interior de ventanas.</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Fecha y Rango de Horario -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Fecha del Servicio</label>
+                            <input type="date" id="client-date" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary text-slate-600">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Rango de Horario (Llegada)</label>
+                            <select id="client-time-range" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary text-slate-600">
+                                <option value="" disabled selected>Selecciona un horario</option>
+                                <option value="manana">Mañana (08:00 AM - 12:00 PM)</option>
+                                <option value="tarde">Tarde (12:00 PM - 04:00 PM)</option>
+                                <option value="noche">Fin de Tarde (04:00 PM - 07:00 PM)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Domicilio y Contacto -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Dirección Completa</label>
+                            <input type="text" id="client-address" placeholder="Ej. Calle, Número, Colonia, Código Postal" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Número de Celular</label>
+                            <input type="tel" id="client-phone" placeholder="10 dígitos" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary">
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Resumen -->
+            <div class="lg:w-1/3">
+                <div class="bg-secondary rounded-2xl p-6 text-white shadow-xl sticky top-24">
+                    <h3 class="text-xl font-bold mb-4 border-b border-slate-600 pb-2">Resumen</h3>
+                    <div class="space-y-3 mb-6 text-slate-300 text-sm">
+                        <div class="flex justify-between">
+                            <span id="summary-rooms">1 Recámara, 1 Baño</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span id="summary-type">Limpieza Estándar</span>
+                        </div>
+                        <div class="flex justify-between pt-4 border-t border-slate-600 text-lg text-white font-bold">
+                            <span>Total (Inc. IVA y Tarifas):</span>
+                            <span id="price-total">$528.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 flex items-start gap-2 bg-slate-800 p-3 rounded-lg">
+                        <input type="checkbox" id="legal-client" class="mt-1 w-4 h-4 cursor-pointer">
+                        <label for="legal-client" class="text-xs text-slate-300 leading-tight">
+                            He leído y acepto los <a href="Terminos_y_Condiciones_Cliente_Cleania.pdf" target="_blank" class="text-primary hover:underline font-bold">Términos y Condiciones</a> y el <a href="Aviso_de_Privacidad_Cleania.pdf" target="_blank" class="text-primary hover:underline font-bold">Aviso de Privacidad</a>.
+                        </label>
+                    </div>
+
+                    <button onclick="submitClientBooking()" class="w-full bg-primary hover:bg-sky-400 text-white font-bold py-3 px-4 rounded-xl transition duration-200 shadow-lg shadow-sky-500/30">
+                        Registrar Solicitud
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==========================================
+         CAPA 3: LOGIN DE ALIADAS VERIFICADAS
+         ========================================== -->
+    <main id="pro-login-view" class="fade-in hidden-view py-20 px-4 sm:px-6 lg:px-8 max-w-md mx-auto">
+        <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 text-center">
+            <h2 class="text-2xl font-extrabold text-secondary mb-2">Acceso Aliadas Cleania</h2>
+            <p class="text-slate-500 text-sm mb-6">Ingresa con las credenciales que te proporcionó el administrador.</p>
+            
+            <form id="login-form" class="space-y-4" onsubmit="loginPro(event)">
+                <div>
+                    <input type="text" id="login-id" placeholder="Número de Aliada (Ej. 1001)" required class="w-full border-slate-300 rounded-lg p-3 border focus:ring-primary text-center font-bold text-lg">
+                </div>
+                <div>
+                    <input type="password" id="login-pass" placeholder="Contraseña" required class="w-full border-slate-300 rounded-lg p-3 border focus:ring-primary text-center">
+                </div>
+                <button type="submit" class="w-full bg-secondary hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition duration-200 shadow-lg mt-4">
+                    Iniciar Sesión
+                </button>
+            </form>
+            
+            <div class="mt-8 pt-6 border-t border-slate-100">
+                <p class="text-sm text-slate-500">¿Aún no tienes cuenta verificada?</p>
+                <button onclick="switchView('pro-register-view')" class="mt-2 text-primary font-bold hover:underline">
+                    Sube tus documentos y aplica aquí
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==========================================
+         CAPA 4: SUBIDA DE DOCUMENTOS (APLICANTES)
+         ========================================== -->
+    <main id="pro-register-view" class="fade-in hidden-view py-12 px-4 sm:px-6 lg:px-8 max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-extrabold text-secondary">Aplica para ser Profesional</h2>
+            <p class="mt-2 text-slate-500">Sube tus documentos. Nosotros te contactaremos para darte tu Número de Aliada.</p>
+        </div>
+
+        <div class="bg-white p-6 md:p-10 rounded-2xl shadow-lg border border-slate-100">
+            <form id="pro-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Nombre Completo</label>
+                        <input type="text" id="pro-name" placeholder="Como aparece en tu INE" class="w-full border-slate-300 rounded-lg p-3 border focus:ring-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Teléfono (WhatsApp)</label>
+                        <input type="tel" id="pro-phone" placeholder="10 dígitos" class="w-full border-slate-300 rounded-lg p-3 border focus:ring-primary">
+                    </div>
+                </div>
+
+                <div class="bg-sky-50 border-2 border-dashed border-primary rounded-xl p-6 text-center">
+                    <svg class="mx-auto h-12 w-12 text-primary" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <div class="mt-4 flex text-sm text-slate-600 justify-center">
+                        <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-sky-600 focus-within:outline-none">
+                            <span>Sube tus documentos</span>
+                            <input id="file-upload" name="file-upload" type="file" multiple class="sr-only">
+                        </label>
+                        <p class="pl-1">o arrástralos aquí</p>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">INE, Comprobante de Domicilio y Referencias (Formatos: PNG, JPG, PDF)</p>
+                </div>
+
+                <div class="flex items-start bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <input type="checkbox" id="legal-pro" class="mt-1 w-5 h-5 cursor-pointer text-primary border-slate-300 rounded">
+                    <label for="legal-pro" class="ml-3 text-sm text-slate-600">
+                        He leído, entiendo y acepto el <a href="Aviso_de_Privacidad_Cleania.pdf" target="_blank" class="text-primary hover:underline font-bold">Aviso de Privacidad</a> para el tratamiento de mis datos personales y documentos.
+                    </label>
+                </div>
+
+                <div class="pt-4 flex justify-between items-center">
+                    <button type="button" onclick="switchView('pro-login-view')" class="text-sm text-slate-500 hover:text-secondary underline">Ya tengo credenciales (Login)</button>
+                    <button type="button" onclick="submitProRegistration()" class="bg-secondary hover:bg-slate-800 text-white font-bold py-3 px-8 rounded-xl transition duration-200 shadow-lg">
+                        Enviar a Revisión
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- ==========================================
+         CAPA 5: PANEL DE TRABAJOS (PROTEGIDO - LIMPIO)
+         ========================================== -->
+    <main id="pro-view" class="fade-in hidden-view py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-8 border-b pb-4">
+            <div>
+                <h2 class="text-3xl font-extrabold text-secondary">Trabajos Disponibles</h2>
+                <p class="mt-2 text-slate-500">Aliada <span id="display-aliada-id" class="font-bold text-primary"></span>, aquí están tus servicios de hoy.</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex gap-4 items-center">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                    <span class="w-2 h-2 mr-2 bg-green-500 rounded-full"></span> Conectada
+                </span>
+                <button onclick="logoutPro()" class="text-sm text-red-500 font-bold hover:underline border border-red-200 px-3 py-1 rounded-full hover:bg-red-50">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <!-- Contenedor dinámico: aquí se cargan las reservas pendientes reales -->
+        <div id="jobs-container" class="space-y-4">
+            <div class="bg-slate-100 border border-slate-200 rounded-xl p-10 text-center text-slate-500">
+                <p class="font-medium">Cargando trabajos disponibles...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==========================================
+         FOOTER LEGAL (Limpio)
+         ========================================== -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="mb-4 flex flex-wrap justify-center gap-6 text-sm font-medium text-slate-500">
+                <!-- Enlaces correctos apuntando a los archivos locales -->
+                <a href="Terminos_y_Condiciones_Cliente_Cleania.pdf" target="_blank" class="hover:text-primary">Términos y Condiciones</a>
+                <a href="Aviso_de_Privacidad_Cleania.pdf" target="_blank" class="hover:text-primary">Aviso de Privacidad</a>
+            </div>
+            <p class="text-slate-400 text-sm">&copy; 2026 Cleania (Representante: Wendy Valery Rosalia Flores Ordaz). Todos los derechos reservados. Estado de México.</p>
+        </div>
+    </footer>
+
+    <!-- SISTEMA DE ALERTAS -->
+    <div id="alert-box" class="fixed bottom-4 right-4 text-white px-6 py-4 rounded-lg shadow-xl font-bold transform transition-all duration-300 translate-y-32 opacity-0 z-50 max-w-sm border-l-4">
+    </div>
+
+    <!-- ==========================================
+         LÓGICA DEL SISTEMA (JAVASCRIPT)
+         ========================================== -->
+    <script>
+        // NAVEGACIÓN Y SESIONES
+        function switchView(viewId) {
+            if (viewId === 'pro-view') {
+                const isLogged = localStorage.getItem('cleania_pro_logged');
+                if (!isLogged) {
+                    showAlert("Acceso denegado. Debes iniciar sesión con tu número de aliada.", "error");
+                    viewId = 'pro-login-view'; 
+                } else {
+                    document.getElementById('display-aliada-id').innerText = localStorage.getItem('cleania_aliada_id');
+                    cargarTrabajos();
+                }
+            }
+
+            const views = ['home-view', 'booking-view', 'pro-login-view', 'pro-register-view', 'pro-view'];
+            views.forEach(v => document.getElementById(v).classList.add('hidden-view'));
+            
+            document.getElementById(viewId).classList.remove('hidden-view');
+            window.scrollTo(0, 0);
+        }
+
+        async function loginPro(event) {
+            event.preventDefault();
+            const idInput = document.getElementById('login-id').value.trim();
+            const passInput = document.getElementById('login-pass').value.trim();
+
+            try {
+                const formData = new FormData();
+                formData.append('numero', idInput);
+                formData.append('password', passInput);
+
+                const res = await fetch('api/login.php', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.success) {
+                    localStorage.setItem('cleania_pro_logged', 'true');
+                    localStorage.setItem('cleania_aliada_id', data.numero);
+
+                    showAlert("¡Bienvenida Aliada " + data.numero + "!", "success");
+
+                    document.getElementById('login-id').value = '';
+                    document.getElementById('login-pass').value = '';
+                    switchView('pro-view');
+                } else {
+                    showAlert(data.message || "Número de aliada o contraseña incorrectos.", "error");
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert("Error al conectar. Intenta de nuevo.", "error");
+            }
+        }
+
+        function logoutPro() {
+            localStorage.removeItem('cleania_pro_logged');
+            localStorage.removeItem('cleania_aliada_id');
+            showAlert("Sesión cerrada correctamente.", "success");
+            switchView('home-view');
+        }
+
+        // PANEL DE TRABAJOS DISPONIBLES
+        const nombresTipo = { basica: 'Limpieza Estándar', profunda: 'Limpieza Profunda' };
+        const nombresRango = { manana: 'Mañana (08:00 AM - 12:00 PM)', tarde: 'Tarde (12:00 PM - 04:00 PM)', noche: 'Fin de Tarde (04:00 PM - 07:00 PM)' };
+
+        async function cargarTrabajos() {
+            const container = document.getElementById('jobs-container');
+            try {
+                const res = await fetch('api/listar_reservas.php');
+                const data = await res.json();
+
+                if (!data.success || data.trabajos.length === 0) {
+                    container.innerHTML = `
+                        <div class="bg-slate-100 border border-slate-200 rounded-xl p-10 text-center text-slate-500">
+                            <p class="font-medium">Por el momento no hay servicios disponibles en tu zona.</p>
+                            <p class="text-sm">Te notificaremos cuando haya una nueva solicitud.</p>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = data.trabajos.map(t => `
+                    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <div>
+                            <p class="font-bold text-secondary">${nombresTipo[t.tipo_limpieza] || t.tipo_limpieza} — ${t.recamaras} Recámara(s), ${t.banos} Baño(s)</p>
+                            <p class="text-sm text-slate-500">${t.direccion}</p>
+                            <p class="text-sm text-slate-500">${t.fecha} · ${nombresRango[t.rango_horario] || t.rango_horario}</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="font-bold text-primary text-lg">${t.total}</span>
+                            <button onclick="tomarTrabajo(${t.id})" class="bg-primary hover:bg-sky-400 text-white font-bold py-2 px-5 rounded-xl">Tomar trabajo</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl p-10 text-center text-red-600">No se pudieron cargar los trabajos. Intenta de nuevo.</div>`;
+            }
+        }
+
+        async function tomarTrabajo(id) {
+            const numeroAliada = localStorage.getItem('cleania_aliada_id');
+            try {
+                const formData = new FormData();
+                formData.append('id', id);
+                formData.append('numero_aliada', numeroAliada);
+
+                const res = await fetch('api/tomar_reserva.php', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (data.success) {
+                    showAlert("¡Trabajo asignado! Contacta al cliente para confirmar.", "success");
+                } else {
+                    showAlert(data.message || "No se pudo tomar el trabajo.", "error");
+                }
+                cargarTrabajos(); // refresca la lista
+            } catch (err) {
+                console.error(err);
+                showAlert("Error al conectar. Intenta de nuevo.", "error");
+            }
+        }
+
+        function selectServiceType(type) {
+            const radBasica = document.getElementById('label-basica');
+            const radProfunda = document.getElementById('label-profunda');
+            if (type === 'basica') {
+                radBasica.classList.add('border-primary', 'bg-sky-50');
+                radProfunda.classList.remove('border-primary', 'bg-sky-50');
+            } else {
+                radProfunda.classList.add('border-primary', 'bg-sky-50');
+                radBasica.classList.remove('border-primary', 'bg-sky-50');
+            }
+        }
+
+        function calculatePrice() {
+            const rooms = parseInt(document.getElementById('rooms').value);
+            const baths = parseInt(document.getElementById('baths').value);
+            const type = document.querySelector('input[name="service_type"]:checked').value;
+            
+            let proPayout = 480 + ((rooms - 1) * 30) + ((baths - 1) * 30);
+            if (type === 'profunda') { proPayout += 150; }
+            let totalClient = proPayout + (proPayout * 0.10);
+
+            document.getElementById('price-total').innerText = '$' + totalClient.toFixed(2);
+            document.getElementById('summary-rooms').innerText = `${rooms} Recámara(s), ${baths} Baño(s)`;
+            document.getElementById('summary-type').innerText = type === 'basica' ? 'Limpieza Estándar' : 'Limpieza Profunda';
+        }
+
+        function showAlert(message, type = 'success') {
+            const alertBox = document.getElementById('alert-box');
+            alertBox.innerText = message;
+            
+            if(type === 'error') {
+                alertBox.classList.remove('bg-green-800', 'border-green-400');
+                alertBox.classList.add('bg-red-800', 'border-red-500');
+            } else {
+                alertBox.classList.remove('bg-red-800', 'border-red-500');
+                alertBox.classList.add('bg-green-800', 'border-green-400');
+            }
+            
+            alertBox.classList.remove('translate-y-32', 'opacity-0');
+            setTimeout(() => { alertBox.classList.add('translate-y-32', 'opacity-0'); }, 4000);
+        }
+
+        // CLIENTE RESERVA
+        async function submitClientBooking() {
+            const legalChecked = document.getElementById('legal-client').checked;
+            const address = document.getElementById('client-address').value;
+            const phone = document.getElementById('client-phone').value;
+            const date = document.getElementById('client-date').value;
+            const timeRange = document.getElementById('client-time-range').value;
+            const rooms = document.getElementById('rooms').value;
+            const baths = document.getElementById('baths').value;
+            const type = document.querySelector('input[name="service_type"]:checked').value;
+            const total = document.getElementById('price-total').innerText;
+
+            if (!date || timeRange === "") { showAlert("Por favor selecciona la fecha y el rango de horario para el servicio.", "error"); return; }
+            if(address.trim() === "" || phone.trim() === "") { showAlert("Llena tu dirección y celular.", "error"); return; }
+            if (!legalChecked) { showAlert("Debes aceptar los Términos y Privacidad.", "error"); return; }
+
+            try {
+                const formData = new FormData();
+                formData.append('address', address);
+                formData.append('phone', phone);
+                formData.append('date', date);
+                formData.append('timeRange', timeRange);
+                formData.append('rooms', rooms);
+                formData.append('baths', baths);
+                formData.append('type', type);
+                formData.append('total', total);
+
+                const res = await fetch('api/guardar_reserva.php', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (!data.success) throw new Error(data.message || 'Error desconocido');
+
+                showAlert("¡Solicitud Registrada! Te notificaremos al " + phone, "success");
+            } catch (err) {
+                console.error(err);
+                showAlert("Hubo un error al guardar tu solicitud. Intenta de nuevo.", "error");
+                return;
+            }
+
+            // Limpiar formulario
+            document.getElementById('client-address').value = "";
+            document.getElementById('client-phone').value = "";
+            document.getElementById('client-date').value = "";
+            document.getElementById('client-time-range').value = "";
+            document.getElementById('legal-client').checked = false;
+        }
+
+        async function submitProRegistration() {
+            const legalChecked = document.getElementById('legal-pro').checked;
+            const name = document.getElementById('pro-name').value;
+            const phone = document.getElementById('pro-phone').value;
+            const fileInput = document.getElementById('file-upload');
+            const files = fileInput.files;
+
+            if(name.trim() === "") { showAlert("Por favor, ingresa tu nombre completo.", "error"); return; }
+            if (files.length === 0) { showAlert("Debes subir al menos un documento (INE, etc).", "error"); return; }
+            if (!legalChecked) { showAlert("Es obligatorio aceptar el Aviso de Privacidad.", "error"); return; }
+
+            showAlert("Subiendo documentos, un momento...", "success");
+
+            try {
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('phone', phone);
+                for (const file of files) {
+                    formData.append('documentos[]', file);
+                }
+
+                const res = await fetch('api/guardar_aliada.php', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (!data.success) throw new Error(data.message || 'Error desconocido');
+
+                showAlert("¡Documentos enviados! Los revisaremos y te contactaremos por WhatsApp para darte tu número de aliada y contraseña.", "success");
+            } catch (err) {
+                console.error(err);
+                showAlert("Hubo un error al subir tus documentos. Intenta de nuevo.", "error");
+                return;
+            }
+
+            document.getElementById('pro-name').value = "";
+            document.getElementById('pro-phone').value = "";
+            document.getElementById('legal-pro').checked = false;
+            fileInput.value = "";
+        }
+
+        window.onload = () => {
+            calculatePrice();
+        };
+    </script>
+</body>
+</html>
+
+
