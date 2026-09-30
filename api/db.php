@@ -32,8 +32,14 @@ $conexion->set_charset('utf8mb4');
 $conexion->query("SET time_zone = '" . (new DateTime())->format('P') . "'");
 
 // ------------------------------------------
-// Catálogo de servicios (debe coincidir con el cotizador de index.html)
+// Tarifas: el cliente propone el precio y Cleania cobra solo una comisión sobre él.
+// Se pueden ajustar en config.php; estos son los valores por defecto.
 // ------------------------------------------
+if (!defined('COMISION_PORCENTAJE')) define('COMISION_PORCENTAJE', 7);
+if (!defined('PRECIO_MINIMO')) define('PRECIO_MINIMO', 300);
+if (!defined('PRECIO_MAXIMO')) define('PRECIO_MAXIMO', 20000);
+
+// Catálogo de servicios (debe coincidir con el formulario de index.html)
 const TIPOS_LIMPIEZA = ['basica' => 'Limpieza Estándar', 'profunda' => 'Limpieza Profunda'];
 const RANGOS_HORARIO = [
     'manana' => 'Mañana (08:00 AM - 12:00 PM)',
@@ -42,13 +48,14 @@ const RANGOS_HORARIO = [
 ];
 const ESTADOS_RESERVA = ['pendiente', 'asignada', 'completada', 'cancelada'];
 
-// Precio al cliente = pago a la aliada + 10%. Se calcula aquí para que nadie pueda alterarlo desde el navegador.
-function calcular_total($recamaras, $banos, $tipo) {
-    $pagoAliada = 480 + (($recamaras - 1) * 30) + (($banos - 1) * 30);
-    if ($tipo === 'profunda') {
-        $pagoAliada += 150;
-    }
-    return round($pagoAliada * 1.10, 2);
+// Reparte el precio que propuso el cliente: comisión de Cleania y lo que recibe la aliada.
+function calcular_reparto($precio) {
+    $comision = round($precio * COMISION_PORCENTAJE / 100, 2);
+    return ['comision' => $comision, 'pago_aliada' => round($precio - $comision, 2)];
+}
+
+function formato_dinero($monto) {
+    return '$' . number_format((float)$monto, 2, '.', ',');
 }
 
 // ------------------------------------------

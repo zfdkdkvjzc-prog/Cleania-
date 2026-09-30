@@ -2,6 +2,7 @@
 -- Ejecuta esto en phpMyAdmin (dentro de tu cPanel de GoDaddy):
 -- selecciona tu base de datos, entra a la pestaña "SQL" y pega este código.
 -- Es seguro ejecutarlo aunque ya tengas tablas creadas: solo crea las que faltan.
+-- ⚠️ Si YA habías creado la tabla "reservas" antes, ejecuta también actualizar_precios.sql
 -- ==========================================
 
 -- 👇 SOLO si ya tenías la tabla "reservas" de una versión MUY antigua (sin la columna asignada_a),
@@ -18,7 +19,11 @@ CREATE TABLE IF NOT EXISTS reservas (
     recamaras INT NOT NULL,
     banos INT NOT NULL,
     tipo_limpieza VARCHAR(20) NOT NULL,
-    total VARCHAR(20) NOT NULL,
+    descripcion TEXT NULL COMMENT 'Lo que el cliente describe de su hogar y del servicio',
+    precio DECIMAL(10,2) NULL COMMENT 'Precio que propone y paga el cliente',
+    comision DECIMAL(10,2) NULL COMMENT 'Comisión de Cleania sobre el precio',
+    pago_aliada DECIMAL(10,2) NULL COMMENT 'Lo que recibe la aliada (precio - comisión)',
+    total VARCHAR(20) NOT NULL COMMENT 'Precio con formato, ej. $650.00',
     estado VARCHAR(20) DEFAULT 'pendiente',
     asignada_a VARCHAR(10) DEFAULT NULL,
     creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,

@@ -351,6 +351,10 @@ $csrf = $_SESSION['csrf'];
         .login input { width: 100%; margin-top: 10px; padding: 12px; }
         .login button { width: 100%; margin-top: 14px; padding: 12px; }
         .cuenta { max-width: 420px; }
+        .descripcion { margin-top: 6px; padding: 8px 10px; background: #f1f5f9; border-radius: 8px; font-size: 14px; color: #334155; max-width: 640px; white-space: normal; overflow-wrap: anywhere; }
+        .reparto { text-align: right; font-size: 14px; }
+        .reparto div { display: flex; justify-content: flex-end; gap: 10px; align-items: baseline; }
+        .reparto span { color: #64748b; }
         .cuenta label { display: block; margin-top: 12px; font-size: 14px; font-weight: 600; }
         .cuenta input { width: 100%; margin-top: 4px; }
     </style>
@@ -380,7 +384,9 @@ $stats = $conexion->query(
         (SELECT COUNT(*) FROM reservas WHERE estado = 'pendiente') AS pendientes,
         (SELECT COUNT(*) FROM reservas WHERE estado = 'asignada') AS asignadas,
         (SELECT COUNT(*) FROM aliadas_pendientes WHERE estado = 'en_revision') AS solicitudes,
-        (SELECT COUNT(*) FROM aliadas WHERE activa = 1) AS aliadas_activas"
+        (SELECT COUNT(*) FROM aliadas WHERE activa = 1) AS aliadas_activas,
+        (SELECT COALESCE(SUM(comision), 0) FROM reservas WHERE estado = 'completada') AS comisiones,
+        (SELECT COALESCE(SUM(comision), 0) FROM reservas WHERE estado = 'asignada') AS comisiones_por_cobrar"
 )->fetch_assoc();
 
 $aliadasActivas = $conexion->query("SELECT numero_aliada, nombre FROM aliadas WHERE activa = 1 ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
@@ -428,6 +434,8 @@ if (!isset($tabs[$tab])) {
         <div class="stat"><b><?= (int)$stats['asignadas'] ?></b><small>Reservas asignadas</small></div>
         <div class="stat"><b><?= (int)$stats['solicitudes'] ?></b><small>Solicitudes por revisar</small></div>
         <div class="stat"><b><?= (int)$stats['aliadas_activas'] ?></b><small>Aliadas activas</small></div>
+        <div class="stat"><b style="color:#16a34a"><?= e(formato_dinero($stats['comisiones'])) ?></b><small>Tus comisiones (<?= e(COMISION_PORCENTAJE) ?>%) de servicios completados</small></div>
+        <div class="stat"><b><?= e(formato_dinero($stats['comisiones_por_cobrar'])) ?></b><small>Comisiones de servicios asignados</small></div>
     </div>
 
     <nav class="tabs">
@@ -479,6 +487,9 @@ if (!isset($tabs[$tab])) {
                     <?php if ($vencida): ?><span class="badge b-inactiva">fecha pasada</span><?php endif; ?>
                     <div class="muted">📅 <?= e($r['fecha']) ?> · <?= e(RANGOS_HORARIO[$r['rango_horario']] ?? $r['rango_horario']) ?></div>
                     <div class="muted">📍 <?= e($r['direccion']) ?></div>
+                    <?php if (!empty($r['descripcion'])): ?>
+                        <div class="descripcion">📝 <?= nl2br(e($r['descripcion'])) ?></div>
+                    <?php endif; ?>
                     <div class="muted">📱 <?= e($r['telefono']) ?>
                         · <a href="<?= e(enlace_whatsapp($r['telefono'])) ?>" target="_blank" rel="noopener" style="color:#16a34a">WhatsApp</a>
                     </div>
@@ -487,8 +498,14 @@ if (!isset($tabs[$tab])) {
                     <?php endif; ?>
                     <div class="muted">Solicitada: <?= e($r['creado_en']) ?></div>
                 </div>
-                <div style="text-align:right">
-                    <div style="font-size:20px;font-weight:800;color:#00b4d8"><?= e($r['total']) ?></div>
+                <div class="reparto">
+                    <?php if ($r['precio'] !== null): ?>
+                        <div><span>Cliente paga</span> <b style="font-size:20px;color:#00b4d8"><?= e(formato_dinero($r['precio'])) ?></b></div>
+                        <div><span>Aliada recibe</span> <b><?= e(formato_dinero($r['pago_aliada'])) ?></b></div>
+                        <div><span>Tu comisión</span> <b style="color:#16a34a"><?= e(formato_dinero($r['comision'])) ?></b></div>
+                    <?php else: ?>
+                        <div><span>Total</span> <b style="font-size:20px;color:#00b4d8"><?= e($r['total']) ?></b></div>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="acciones" style="margin-top:12px">
@@ -572,7 +589,8 @@ if (!isset($tabs[$tab])) {
     $aliadas = $conexion->query(
         "SELECT a.numero_aliada, a.nombre, a.telefono, a.activa, a.creado_en,
                 (SELECT COUNT(*) FROM reservas r WHERE r.asignada_a = a.numero_aliada AND r.estado = 'asignada') AS asignadas,
-                (SELECT COUNT(*) FROM reservas r WHERE r.asignada_a = a.numero_aliada AND r.estado = 'completada') AS completadas
+                (SELECT COUNT(*) FROM reservas r WHERE r.asignada_a = a.numero_aliada AND r.estado = 'completada') AS completadas,
+                (SELECT COALESCE(SUM(r.pago_aliada), 0) FROM reservas r WHERE r.asignada_a = a.numero_aliada AND r.estado = 'completada') AS ganado
          FROM aliadas a ORDER BY a.activa DESC, CAST(a.numero_aliada AS UNSIGNED) ASC"
     )->fetch_all(MYSQLI_ASSOC);
 ?>
@@ -589,7 +607,7 @@ if (!isset($tabs[$tab])) {
                     <div class="muted">📱 <?= e($a['telefono']) ?>
                         · <a href="<?= e(enlace_whatsapp($a['telefono'])) ?>" target="_blank" rel="noopener" style="color:#16a34a">WhatsApp</a>
                     </div>
-                    <div class="muted">Trabajos asignados: <?= (int)$a['asignadas'] ?> · Completados: <?= (int)$a['completadas'] ?> · Desde: <?= e(substr($a['creado_en'], 0, 10)) ?></div>
+                    <div class="muted">Trabajos asignados: <?= (int)$a['asignadas'] ?> · Completados: <?= (int)$a['completadas'] ?> · Ha ganado: <?= e(formato_dinero($a['ganado'])) ?> · Desde: <?= e(substr($a['creado_en'], 0, 10)) ?></div>
                 </div>
                 <div class="acciones">
                     <form method="post" class="inline" onsubmit="return confirm('¿Generar una nueva contraseña? La anterior dejará de funcionar.');">

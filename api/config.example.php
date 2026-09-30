@@ -23,5 +23,11 @@ define('ADMIN_PASSWORD_HASH', 'PEGA_AQUI_EL_HASH');
 // (ej: '/home/TU_USUARIO/uploads_aliadas/') para que nunca sea accesible desde la web.
 define('UPLOADS_DIR', __DIR__ . '/../uploads_aliadas/');
 
+// Tarifas: el cliente propone cuánto paga y Cleania se queda con este porcentaje de comisión.
+// La aliada ve y recibe el resto. Precio mínimo y máximo que se permite proponer (MXN).
+define('COMISION_PORCENTAJE', 7);
+define('PRECIO_MINIMO', 300);
+define('PRECIO_MAXIMO', 20000);
+
 // Zona horaria del negocio (para validar fechas de reserva).
 define('ZONA_HORARIA', 'America/Mexico_City');

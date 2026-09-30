@@ -64,7 +64,7 @@
                         </p>
                         <div class="mt-8 sm:flex sm:justify-center lg:justify-start gap-4">
                             <button onclick="switchView('booking-view')" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-bold rounded-full text-white bg-primary bg-primary-hover md:py-4 md:text-lg">
-                                Cotizar y Agendar
+                                Publicar mi limpieza
                             </button>
                             <button onclick="switchView('pro-register-view')" class="mt-3 w-full flex items-center justify-center px-8 py-3 border-2 border-primary text-base font-bold rounded-full text-primary hover:bg-slate-800 md:py-4 md:text-lg md:mt-0">
                                 Aplica para ser Aliada
@@ -87,7 +87,7 @@
     <main id="booking-view" class="fade-in hidden-view py-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
         <div class="text-center mb-10">
             <h2 class="text-3xl font-extrabold text-secondary">Configura tu limpieza</h2>
-            <p class="mt-2 text-slate-500">Obtén un precio transparente al instante y agenda a tu profesional.</p>
+            <p class="mt-2 text-slate-500">Describe tu hogar, propón cuánto quieres pagar y una aliada verificada tomará tu servicio.</p>
         </div>
 
         <div class="flex flex-col lg:flex-row gap-8">
@@ -97,7 +97,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Recámaras</label>
-                            <select id="rooms" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary" onchange="calculatePrice()">
+                            <select id="rooms" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary" onchange="actualizarResumen()">
                                 <option value="1">1 Recámara</option>
                                 <option value="2">2 Recámaras</option>
                                 <option value="3">3 Recámaras</option>
@@ -106,7 +106,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-700 mb-2">Baños</label>
-                            <select id="baths" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary" onchange="calculatePrice()">
+                            <select id="baths" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary" onchange="actualizarResumen()">
                                 <option value="1">1 Baño</option>
                                 <option value="2">2 Baños</option>
                                 <option value="3">3 Baños</option>
@@ -119,14 +119,14 @@
                         <label class="block text-sm font-medium text-slate-700 mb-2">Tipo de Limpieza</label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <label class="border p-4 rounded-lg cursor-pointer hover:border-primary flex items-start gap-3 border-primary bg-sky-50" id="label-basica" onclick="selectServiceType('basica')">
-                                <input type="radio" name="service_type" value="basica" class="mt-1" checked onchange="calculatePrice()">
+                                <input type="radio" name="service_type" value="basica" class="mt-1" checked onchange="actualizarResumen()">
                                 <div>
                                     <p class="font-bold text-secondary">Estándar</p>
                                     <p class="text-xs text-slate-500">Limpieza superficial, polvo y pisos.</p>
                                 </div>
                             </label>
                             <label class="border p-4 rounded-lg cursor-pointer hover:border-primary flex items-start gap-3" id="label-profunda" onclick="selectServiceType('profunda')">
-                                <input type="radio" name="service_type" value="profunda" class="mt-1" onchange="calculatePrice()">
+                                <input type="radio" name="service_type" value="profunda" class="mt-1" onchange="actualizarResumen()">
                                 <div>
                                     <p class="font-bold text-secondary">Profunda</p>
                                     <p class="text-xs text-slate-500">Detalle a fondo, interior de ventanas.</p>
@@ -163,6 +163,23 @@
                             <input type="tel" id="client-phone" placeholder="10 dígitos" class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary">
                         </div>
                     </div>
+
+                    <!-- Descripción del servicio -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Describe tu hogar y lo que necesitas <span class="text-slate-400 font-normal">(opcional)</span></label>
+                        <textarea id="client-description" rows="4" maxlength="1000" oninput="actualizarContador()" placeholder="Ej. Departamento de 70 m², tengo un perro, hay que lavar trastes y limpiar el refrigerador por dentro. Tengo productos de limpieza." class="w-full border-slate-300 rounded-lg shadow-sm p-3 border focus:ring-primary"></textarea>
+                        <p class="text-xs text-slate-400 text-right"><span id="description-count">0</span>/1000</p>
+                    </div>
+
+                    <!-- Precio propuesto por el cliente -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">¿Cuánto ofreces pagar por el servicio?</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-500 font-bold">$</span>
+                            <input type="number" id="client-price" inputmode="decimal" min="300" step="10" placeholder="Ej. 650" oninput="actualizarResumen()" class="w-full border-slate-300 rounded-lg shadow-sm p-3 pl-8 border focus:ring-primary text-lg font-bold">
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2">Tú decides el precio (mínimo <span id="price-min-label">$300</span> MXN). Una oferta justa hace que una aliada tome tu servicio más rápido.</p>
+                    </div>
                 </form>
             </div>
 
@@ -178,9 +195,18 @@
                             <span id="summary-type">Limpieza Estándar</span>
                         </div>
                         <div class="flex justify-between pt-4 border-t border-slate-600 text-lg text-white font-bold">
-                            <span>Total (Inc. IVA y Tarifas):</span>
-                            <span id="price-total">$528.00</span>
+                            <span>Tu oferta:</span>
+                            <span id="price-total">—</span>
                         </div>
+                        <div class="flex justify-between">
+                            <span>La aliada recibe:</span>
+                            <span id="price-pro">—</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Comisión Cleania (<span class="commission-label">7</span>%):</span>
+                            <span id="price-fee">—</span>
+                        </div>
+                        <p class="text-xs text-slate-400 pt-2">Pagas exactamente lo que ofreces. Solo cobramos una comisión del <span class="commission-label">7</span>%; el resto es para la aliada.</p>
                     </div>
                     
                     <div class="mb-4 flex items-start gap-2 bg-slate-800 p-3 rounded-lg">
@@ -431,7 +457,16 @@
             return `
                 <p class="font-bold text-secondary">${esc(nombresTipo[t.tipo_limpieza] || t.tipo_limpieza)} — ${esc(t.recamaras)} Recámara(s), ${esc(t.banos)} Baño(s)</p>
                 <p class="text-sm text-slate-500">${esc(t.direccion)}</p>
-                <p class="text-sm text-slate-500">${esc(t.fecha)} · ${esc(nombresRango[t.rango_horario] || t.rango_horario)}</p>`;
+                <p class="text-sm text-slate-500">${esc(t.fecha)} · ${esc(nombresRango[t.rango_horario] || t.rango_horario)}</p>
+                ${t.descripcion ? `<p class="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-3 mt-2 whitespace-pre-line break-words">${esc(t.descripcion)}</p>` : ''}`;
+        }
+
+        // Las aliadas solo ven lo que ellas ganan
+        function ganancia(t) {
+            return `<div class="text-right">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Tú ganas</p>
+                        <p class="font-bold text-green-700 text-xl">${esc(formatoDinero(t.pago_aliada))}</p>
+                    </div>`;
         }
 
         async function cargarTrabajos() {
@@ -451,7 +486,7 @@
                                 · <a href="https://wa.me/52${esc(t.telefono)}" target="_blank" rel="noopener" class="text-green-700 hover:underline">WhatsApp</a></p>
                         </div>
                         <div class="flex items-center gap-4">
-                            <span class="font-bold text-primary text-lg">${esc(t.total)}</span>
+                            ${ganancia(t)}
                             <span class="text-xs font-bold uppercase px-3 py-1 rounded-full ${t.estado === 'completada' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">${esc(t.estado)}</span>
                         </div>
                     </div>
@@ -470,7 +505,7 @@
                     <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
                         <div>${detalleTrabajo(t)}</div>
                         <div class="flex items-center gap-4">
-                            <span class="font-bold text-primary text-lg">${esc(t.total)}</span>
+                            ${ganancia(t)}
                             <button onclick="tomarTrabajo(${Number(t.id)})" class="bg-primary hover:bg-sky-400 text-white font-bold py-2 px-5 rounded-xl">Tomar trabajo</button>
                         </div>
                     </div>
@@ -514,18 +549,48 @@
             }
         }
 
-        function calculatePrice() {
+        // TARIFAS: el cliente propone el precio; Cleania cobra solo una comisión (se lee de api/tarifas.php)
+        const tarifas = { comision: 7, minimo: 300, maximo: 20000 };
+
+        function formatoDinero(monto) {
+            return '$' + Number(monto || 0).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function cargarTarifas() {
+            try {
+                const res = await fetch('api/tarifas.php');
+                const data = await res.json();
+                if (data.success) Object.assign(tarifas, { comision: data.comision, minimo: data.minimo, maximo: data.maximo });
+            } catch (err) {
+                console.error(err);
+            }
+            document.querySelectorAll('.commission-label').forEach(el => el.innerText = tarifas.comision);
+            document.getElementById('price-min-label').innerText = formatoDinero(tarifas.minimo);
+            document.getElementById('client-price').min = tarifas.minimo;
+            document.getElementById('client-price').max = tarifas.maximo;
+            actualizarResumen();
+        }
+
+        function actualizarResumen() {
             const rooms = parseInt(document.getElementById('rooms').value);
             const baths = parseInt(document.getElementById('baths').value);
             const type = document.querySelector('input[name="service_type"]:checked').value;
-            
-            let proPayout = 480 + ((rooms - 1) * 30) + ((baths - 1) * 30);
-            if (type === 'profunda') { proPayout += 150; }
-            let totalClient = proPayout + (proPayout * 0.10);
+            const precio = parseFloat(document.getElementById('client-price').value);
 
-            document.getElementById('price-total').innerText = '$' + totalClient.toFixed(2);
+            if (precio > 0) {
+                const comision = Math.round(precio * tarifas.comision) / 100;
+                document.getElementById('price-total').innerText = formatoDinero(precio);
+                document.getElementById('price-fee').innerText = formatoDinero(comision);
+                document.getElementById('price-pro').innerText = formatoDinero(precio - comision);
+            } else {
+                ['price-total', 'price-fee', 'price-pro'].forEach(id => document.getElementById(id).innerText = '—');
+            }
             document.getElementById('summary-rooms').innerText = `${rooms} Recámara(s), ${baths} Baño(s)`;
             document.getElementById('summary-type').innerText = type === 'basica' ? 'Limpieza Estándar' : 'Limpieza Profunda';
+        }
+
+        function actualizarContador() {
+            document.getElementById('description-count').innerText = document.getElementById('client-description').value.length;
         }
 
         function showAlert(message, type = 'success') {
@@ -554,10 +619,15 @@
             const rooms = document.getElementById('rooms').value;
             const baths = document.getElementById('baths').value;
             const type = document.querySelector('input[name="service_type"]:checked').value;
+            const description = document.getElementById('client-description').value.trim();
+            const price = parseFloat(document.getElementById('client-price').value);
 
             if (!date || timeRange === "") { showAlert("Por favor selecciona la fecha y el rango de horario para el servicio.", "error"); return; }
             if(address.trim() === "" || phone.trim() === "") { showAlert("Llena tu dirección y celular.", "error"); return; }
             if (phone.replace(/\D/g, '').length < 10) { showAlert("El celular debe tener 10 dígitos.", "error"); return; }
+            if (!(price >= tarifas.minimo && price <= tarifas.maximo)) {
+                showAlert("Propón un precio entre " + formatoDinero(tarifas.minimo) + " y " + formatoDinero(tarifas.maximo) + ".", "error"); return;
+            }
             if (!legalChecked) { showAlert("Debes aceptar los Términos y Privacidad.", "error"); return; }
 
             try {
@@ -569,6 +639,8 @@
                 formData.append('rooms', rooms);
                 formData.append('baths', baths);
                 formData.append('type', type);
+                formData.append('description', description);
+                formData.append('price', price);
 
                 const res = await fetch('api/guardar_reserva.php', { method: 'POST', body: formData });
                 const data = await res.json();
@@ -578,7 +650,7 @@
                     return;
                 }
 
-                showAlert("¡Solicitud Registrada por " + data.total + "! Te notificaremos al " + phone, "success");
+                showAlert("¡Tu limpieza fue publicada por " + data.total + "! Te avisaremos al " + phone + " cuando una aliada la tome.", "success");
             } catch (err) {
                 console.error(err);
                 showAlert("Hubo un error al guardar tu solicitud. Intenta de nuevo.", "error");
@@ -590,7 +662,11 @@
             document.getElementById('client-phone').value = "";
             document.getElementById('client-date').value = "";
             document.getElementById('client-time-range').value = "";
+            document.getElementById('client-description').value = "";
+            document.getElementById('client-price').value = "";
             document.getElementById('legal-client').checked = false;
+            actualizarContador();
+            actualizarResumen();
         }
 
         async function submitProRegistration() {
@@ -641,7 +717,7 @@
         }
 
         window.onload = () => {
-            calculatePrice();
+            cargarTarifas();
             // No permite elegir fechas pasadas en el calendario
             const hoy = new Date();
             hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
