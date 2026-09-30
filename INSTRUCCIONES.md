@@ -39,3 +39,9 @@ con el usuario y la contraseña de administrador. Después, cámbiala en la pest
 - **Solicitudes**: ver los documentos de las aspirantes, aprobarlas (se genera el número de aliada y la contraseña, con un botón para enviarlos por WhatsApp) o rechazarlas (sus documentos se borran).
 - **Aliadas**: ver sus trabajos y cuánto ha ganado cada una, generarles una nueva contraseña, y desactivarlas o reactivarlas.
 - **Mi cuenta**: cambiar tu contraseña de administrador.
+
+## Documentos legales
+Los PDF de Términos y Condiciones y Aviso de Privacidad se generan a partir de `legal/terminos.html` y
+`legal/aviso_privacidad.html`. Si cambias el porcentaje de comisión en `config.php`, actualiza también la
+cláusula TERCERA de los Términos y vuelve a generar los PDF con `node legal/generar_pdfs.js`.
+La carpeta `legal/` no necesita subirse al servidor.
